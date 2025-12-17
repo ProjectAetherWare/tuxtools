@@ -4,20 +4,27 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tuxtools - Linux Utility Toolkit</title>
+<link rel="icon" type="image/png" href="tux.png">
 <style>
     body {
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         margin: 0;
         padding: 0;
-        background-color: #fff8f2;
+        /* Matte gradient background */
+        background: linear-gradient(135deg, #ffffff, #ffb74d);
         color: #333;
+        position: relative;
+        min-height: 100vh;
     }
 
     header {
-        background-color: #ff6f00;
+        background-color: rgba(255,111,0,0.9);
         color: white;
         padding: 40px 20px;
         text-align: center;
+        border-bottom-left-radius: 20px;
+        border-bottom-right-radius: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
     }
 
     header h1 {
@@ -35,6 +42,9 @@
         max-width: 1000px;
         margin: 30px auto;
         padding: 20px;
+        background-color: rgba(255,255,255,0.9);
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
     }
 
     section {
@@ -101,11 +111,25 @@
     }
 
     footer {
-        background-color: #ff6f00;
+        background-color: rgba(255,111,0,0.9);
         color: white;
         text-align: center;
         padding: 20px;
         margin-top: 40px;
+        border-top-left-radius: 20px;
+        border-top-right-radius: 20px;
+        box-shadow: 0 -5px 15px rgba(0,0,0,0.2);
+    }
+
+    /* Tux image bottom-left corner */
+    .tux-corner {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 120px;
+        opacity: 0.85;
+        z-index: 1000;
+        pointer-events: none;
     }
 
 </style>
@@ -165,6 +189,9 @@
 <footer>
     &copy; 2025 Project AetherWare
 </footer>
+
+<!-- Tux image at bottom left -->
+<img src="tux.png" alt="Tux Logo" class="tux-corner">
 
 <script>
     fetch("https://raw.githubusercontent.com/ProjectAetherWare/tuxtools/main/tuxtools.sh")
