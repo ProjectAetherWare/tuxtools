@@ -1,270 +1,118 @@
 #!/bin/bash
-# Tuxtools Full Installer (All-in-One, Fully Functional)
+# Tuxtools Full Installer & Command Manager
+# Author: Project AetherWare
+# Version: 2.0.0
+# Installs Tuxtools and all commands as executable utilities
 
 TU_DIR="$HOME/.tuxtools"
-BIN_DIR="$HOME/.local/bin"
-COMMANDS_DIR="$TU_DIR/commands"
-CMDS_DIR="$TU_DIR/cmds"
-LOGS_DIR="$TU_DIR/logs"
+BIN_DIR="$TU_DIR/commands"
+INSTALL_BIN="/usr/local/bin"
+SCRIPT_URL="https://raw.githubusercontent.com/ProjectAetherWare/tuxtools/main/tuxtools.sh"
+LOG_FILE="$TU_DIR/tuxtools.log"
 
-mkdir -p "$COMMANDS_DIR" "$CMDS_DIR" "$LOGS_DIR" "$BIN_DIR"
+mkdir -p "$BIN_DIR"
+touch "$LOG_FILE"
 
-echo "Tuxtools: folder structure created."
+echo "Installing Tuxtools..."
 
-# Logging function
-log_run() {
-    echo "$(date '+%F %T') | $1" >> "$LOGS_DIR/tuxtools.log"
+# ============================
+# Core Command Definitions
+# ============================
+
+# Function to create individual command scripts
+create_command() {
+    local cmd_name="$1"
+    local cmd_body="$2"
+    local cmd_file="$BIN_DIR/$cmd_name"
+
+    cat > "$cmd_file" <<EOL
+#!/bin/bash
+# Tuxtools command: $cmd_name
+$cmd_body
+EOL
+    chmod +x "$cmd_file"
+    ln -sf "$cmd_file" "$INSTALL_BIN/$cmd_name"
 }
 
-# --- Create all command files ---
-# repairall
-cat > "$CMDS_DIR/repairall.cmd" <<'EOF'
+# ----------------------------
+# Core Commands
+# ----------------------------
+create_command "repairall" 'echo "Running repairall..."; sudo apt update && sudo apt upgrade -y; sudo apt autoremove -y; sudo reboot'
+create_command "optimizeall" 'echo "Optimizing system..."; cleanup; sudo sysctl -w vm.swappiness=10; echo "Optimization done."; sudo reboot'
+create_command "cleanup" 'echo "Cleaning temp files and logs..."; rm -rf /tmp/* ~/.cache/*; sudo journalctl --vacuum-time=2weeks; echo "Cleanup complete."'
+create_command "sysinfo" 'echo "System Info:"; uname -a; lsb_release -a 2>/dev/null; free -h; df -h; lscpu'
+create_command "updateapps" 'sudo apt update && sudo apt upgrade -y; if command -v snap >/dev/null; then sudo snap refresh; fi; if command -v flatpak >/dev/null; then flatpak update -y; fi; echo "Apps updated."'
+create_command "clearcache" 'sudo apt clean; rm -rf ~/.cache/*; echo "Caches cleared."'
+create_command "flushdns" 'sudo systemd-resolve --flush-caches 2>/dev/null || sudo resolvectl flush-caches 2>/dev/null; echo "DNS flushed."'
+create_command "fixperms" 'sudo chown -R $USER:$USER $HOME; echo "Permissions fixed."'
+create_command "speedtest" 'if ! command -v speedtest-cli >/dev/null; then sudo apt install speedtest-cli -y; fi; speedtest-cli'
+create_command "findbig" 'echo "Top 10 largest files in home:"; find $HOME -type f -exec du -h {} + | sort -rh | head -n 10'
+create_command "rebootnow" 'sudo reboot'
+create_command "shutdownnow" 'sudo shutdown now'
+create_command "sysupdate" 'sudo apt update && sudo apt upgrade -y; sudo apt autoremove -y; sudo apt autoclean -y; echo "System updated."'
+create_command "temps" 'if command -v sensors >/dev/null; then sensors; else echo "Install lm-sensors to see temperatures."; fi'
+create_command "gaming-mode" 'sudo sysctl -w vm.swappiness=10; sudo systemctl disable bluetooth.service --now 2>/dev/null; echo "Gaming mode applied."'
+create_command "fps-boost" 'export __GL_SYNC_TO_VBLANK=0; echo "VSync disabled for FPS boost."'
+create_command "alias-add" 'if [ -z "$1" ] || [ -z "$2" ]; then echo "Usage: alias-add <name> <command>"; exit 1; fi; echo "alias $1=\"$2\"" >> ~/.bash_aliases; source ~/.bash_aliases; echo "Alias $1 added."'
+create_command "log-run" 'cat "$LOG_FILE"'
+create_command "update-tuxtools" 'cd "$TU_DIR"; wget -O tuxtools.sh "$SCRIPT_URL"; chmod +x tuxtools.sh; echo "Tuxtools updated."'
+create_command "reinstall-tuxtools" 'rm -rf "$TU_DIR"; bash <(curl -s "$SCRIPT_URL")'
+
+# ----------------------------
+# New Enhanced Commands
+# ----------------------------
+create_command "diskcheck" 'echo "Checking disk usage..."; df -h; echo "Disk check complete."'
+create_command "memcheck" 'echo "Memory usage:"; free -h'
+create_command "netinfo" 'echo "Network Info:"; ip a; echo "Routing table:"; route -n'
+create_command "processes" 'echo "Top CPU processes:"; ps aux --sort=-%cpu | head -n 10'
+create_command "tempclean" 'echo "Removing temp logs..."; rm -rf /tmp/*; echo "Temp cleanup complete."'
+create_command "backup-home" 'echo "Backing up home directory..."; tar -czvf $HOME/home_backup_$(date +%F).tar.gz $HOME; echo "Backup complete."'
+
+# ============================
+# Tuxtools Menu
+# ============================
+TU_MENU="$BIN_DIR/tuxtools"
+cat > "$TU_MENU" <<'EOL'
 #!/bin/bash
-read -p "Full system repair, update, and reboot? [y/N]: " choice
-[[ $choice != y && $choice != Y ]] && exit
-sudo apt update && sudo apt upgrade -y && sudo apt autoremove -y
-sudo reboot
-EOF
+# Tuxtools Main Menu
 
-# optimizeall
-cat > "$CMDS_DIR/optimizeall.cmd" <<'EOF'
-#!/bin/bash
-read -p "Optimize performance, clean caches, and reboot? [y/N]: " choice
-[[ $choice != y && $choice != Y ]] && exit
-sudo apt clean && sudo apt autoremove -y
-rm -rf /tmp/*
-sync; sudo sysctl -w vm.drop_caches=3
-sudo reboot
-EOF
+LOG_FILE="$HOME/.tuxtools/tuxtools.log"
 
-# cleanup
-cat > "$CMDS_DIR/cleanup.cmd" <<'EOF'
-#!/bin/bash
-read -p "Delete temp files and logs? [y/N]: " choice
-[[ $choice != y && $choice != Y ]] && exit
-sudo find /var/log -type f -name "*.log" -delete
-rm -rf /tmp/*
-echo "Cleanup complete!"
-EOF
+echo "==========================="
+echo "      Tuxtools Menu         "
+echo "==========================="
+echo "repairall      - Full system repair, update, and reboot"
+echo "optimizeall    - Performance optimizer + cleanup + reboot"
+echo "cleanup        - Fast cleanup of temp files and logs"
+echo "sysinfo        - Show system, CPU, memory info"
+echo "sysupdate      - Safe system update and repair"
+echo "updateapps     - Update APT, Snap, Flatpak apps"
+echo "clearcache     - Clear system/user caches"
+echo "flushdns       - Flush DNS cache"
+echo "fixperms       - Fix home folder permissions"
+echo "speedtest      - Check internet speed"
+echo "findbig        - Find top 10 largest files in home"
+echo "rebootnow      - Reboot system"
+echo "shutdownnow    - Shutdown system"
+echo "temps          - Show CPU/GPU temps"
+echo "gaming-mode    - Optimize system for gaming"
+echo "fps-boost      - Boost FPS"
+echo "alias-add      - Add terminal alias"
+echo "log-run        - Show command log"
+echo "update-tuxtools- Update Tuxtools"
+echo "reinstall-tuxtools - Reinstall Tuxtools"
+echo "diskcheck      - Check disk usage"
+echo "memcheck       - Check memory usage"
+echo "netinfo        - Show network info"
+echo "processes      - Top CPU processes"
+echo "tempclean      - Cleanup temp logs"
+echo "backup-home    - Backup home directory"
 
-# sysinfo
-cat > "$CMDS_DIR/sysinfo.cmd" <<'EOF'
-#!/bin/bash
-echo "Hostname: $(hostname)"
-echo "Kernel: $(uname -r)"
-echo "CPU: $(lscpu | grep 'Model name' | cut -d: -f2)"
-echo "RAM usage:"
-free -h
-echo "Disk usage:"
-df -h
-EOF
+echo "==========================="
+EOL
 
-# sysupdate
-cat > "$CMDS_DIR/sysupdate.cmd" <<'EOF'
-#!/bin/bash
-read -p "Safe full system update + repair? [y/N]: " choice
-[[ $choice != y && $choice != Y ]] && exit
-sudo apt update && sudo apt upgrade -y
-sudo apt autoremove -y
-sudo apt --fix-broken install -y
-EOF
+chmod +x "$TU_MENU"
+ln -sf "$TU_MENU" "$INSTALL_BIN/tuxtools"
 
-# updateapps
-cat > "$CMDS_DIR/updateapps.cmd" <<'EOF'
-#!/bin/bash
-sudo apt update && sudo apt upgrade -y
-sudo snap refresh
-flatpak update -y
-EOF
-
-# clearcache
-cat > "$CMDS_DIR/clearcache.cmd" <<'EOF'
-#!/bin/bash
-sudo apt clean
-rm -rf ~/.cache/*
-sudo rm -rf /var/cache/apt/*
-EOF
-
-# flushdns
-cat > "$CMDS_DIR/flushdns.cmd" <<'EOF'
-#!/bin/bash
-sudo systemd-resolve --flush-caches
-echo "DNS cache flushed"
-EOF
-
-# fixperms
-cat > "$CMDS_DIR/fixperms.cmd" <<'EOF'
-#!/bin/bash
-read -p "Fix home folder permissions? [y/N]: " choice
-[[ $choice != y && $choice != Y ]] && exit
-sudo chown -R $USER:$USER $HOME
-echo "Permissions fixed"
-EOF
-
-# speedtest
-cat > "$CMDS_DIR/speedtest.cmd" <<'EOF'
-#!/bin/bash
-if ! command -v speedtest-cli >/dev/null 2>&1; then
-    sudo apt install -y speedtest-cli
-fi
-speedtest-cli
-EOF
-
-# findbig
-cat > "$CMDS_DIR/findbig.cmd" <<'EOF'
-#!/bin/bash
-echo "Top 10 largest files in home:"
-find $HOME -type f -exec du -h {} + | sort -rh | head -n 10
-EOF
-
-# rebootnow
-cat > "$CMDS_DIR/rebootnow.cmd" <<'EOF'
-#!/bin/bash
-read -p "Reboot immediately? [y/N]: " choice
-[[ $choice != y && $choice != Y ]] && exit
-sudo reboot
-EOF
-
-# shutdownnow
-cat > "$CMDS_DIR/shutdownnow.cmd" <<'EOF'
-#!/bin/bash
-read -p "Shutdown immediately? [y/N]: " choice
-[[ $choice != y && $choice != Y ]] && exit
-sudo shutdown now
-EOF
-
-# temps
-cat > "$CMDS_DIR/temps.cmd" <<'EOF'
-#!/bin/bash
-if command -v sensors >/dev/null 2>&1; then
-    sensors
-else
-    sudo apt install -y lm-sensors
-    sudo sensors-detect --auto
-    sensors
-fi
-EOF
-
-# gaming-mode
-cat > "$CMDS_DIR/gaming-mode.cmd" <<'EOF'
-#!/bin/bash
-echo "Disabling unnecessary services for gaming..."
-sudo systemctl stop bluetooth.service
-sudo systemctl stop cups.service
-sudo systemctl stop apache2.service
-sync; sudo sysctl -w vm.drop_caches=3
-echo "Gaming mode applied"
-EOF
-
-# fps-boost
-cat > "$CMDS_DIR/fps-boost.cmd" <<'EOF'
-#!/bin/bash
-export __GL_SYNC_TO_VBLANK=0
-echo "VSync disabled for maximum FPS"
-EOF
-
-# alias-add
-cat > "$CMDS_DIR/alias-add.cmd" <<'EOF'
-#!/bin/bash
-read -p "Enter alias name: " name
-read -p "Enter command: " cmd
-echo "alias $name='$cmd'" >> ~/.bashrc
-source ~/.bashrc
-echo "Alias $name added!"
-EOF
-
-# log-run
-cat > "$CMDS_DIR/log-run.cmd" <<'EOF'
-#!/bin/bash
-tail -n 50 ~/.tuxtools/logs/tuxtools.log
-EOF
-
-# update-tuxtools
-cat > "$CMDS_DIR/update-tuxtools.cmd" <<'EOF'
-#!/bin/bash
-echo "Re-run this installer to update tuxtools."
-EOF
-
-# --- Make stubs executable ---
-for cmdfile in "$CMDS_DIR"/*.cmd; do
-    cmdname=$(basename "$cmdfile" .cmd)
-    cat > "$COMMANDS_DIR/$cmdname" <<EOF
-#!/bin/bash
-TU_DIR="\$HOME/.tuxtools"
-CMDS_DIR="\$TU_DIR/cmds"
-LOGS_DIR="\$TU_DIR/logs"
-if [[ -f "\$CMDS_DIR/$cmdname.cmd" ]]; then
-    bash "\$CMDS_DIR/$cmdname.cmd"
-    echo "\$(date '+%F %T') | $cmdname executed" >> "\$LOGS_DIR/tuxtools.log"
-else
-    echo "Command file \$CMDS_DIR/$cmdname.cmd not found!"
-fi
-EOF
-    chmod +x "$COMMANDS_DIR/$cmdname"
-done
-
-# --- Launcher ---
-cat > "$BIN_DIR/tuxtools" <<'EOF'
-#!/bin/bash
-TU_DIR="$HOME/.tuxtools"
-COMMANDS_DIR="$TU_DIR/commands"
-LOGS_DIR="$TU_DIR/logs"
-
-show_menu() {
-    echo -e "\e[1;34m=== TUXTOOLS MENU ===\e[0m"
-    echo -e "\e[1;33mSystem & Performance\e[0m"
-    echo "repairall, optimizeall, cleanup, sysinfo, sysupdate"
-    echo -e "\n\e[1;33mPackage & Cache Management\e[0m"
-    echo "updateapps, clearcache, flushdns, fixperms"
-    echo -e "\n\e[1;33mDisk & Storage\e[0m"
-    echo "findbig"
-    echo -e "\n\e[1;33mNetwork\e[0m"
-    echo "speedtest"
-    echo -e "\n\e[1;33mReboot & Power\e[0m"
-    echo "rebootnow, shutdownnow"
-    echo -e "\n\e[1;33mMonitoring / Info\e[0m"
-    echo "temps"
-    echo -e "\n\e[1;33mGaming / Optimization\e[0m"
-    echo "gaming-mode, fps-boost"
-    echo -e "\n\e[1;33mExtras / Utilities\e[0m"
-    echo "alias-add, log-run, update-tuxtools"
-    echo -e "\nType a command to run it, or 'exit' to quit."
-}
-
-if [[ "$1" == "-options" ]]; then
-    echo -e "\e[1;34m=== TUXTOOLS OPTIONS ===\e[0m"
-    echo "1) List commands"
-    echo "2) Update Tuxtools"
-    echo "3) Delete Tuxtools"
-    read -p "Choose: " choice
-    case "$choice" in
-        1) ls "$COMMANDS_DIR" ;;
-        2) echo "Re-run installer to update Tuxtools." ;;
-        3) rm -rf "$TU_DIR"; echo "Tuxtools deleted"; exit ;;
-        *) echo "Invalid option"; exit ;;
-    esac
-    exit
-fi
-
-while true; do
-    show_menu
-    read -p "Tuxtools> " cmd
-    [[ "$cmd" == "exit" ]] && break
-    if [[ -x "$COMMANDS_DIR/$cmd" ]]; then
-        "$COMMANDS_DIR/$cmd"
-    else
-        echo "Command not found"
-    fi
-done
-EOF
-
-chmod +x "$BIN_DIR/tuxtools"
-
-# Add bin to PATH
-if ! echo "$PATH" | grep -q "$BIN_DIR"; then
-    echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
-    echo "Added $BIN_DIR to PATH. Run 'source ~/.bashrc' or restart terminal."
-fi
-
-echo "Tuxtools installed successfully!"
-echo "Run 'tuxtools' for menu or commands directly in terminal."
+echo "Installation complete!"
+echo "All commands are now available globally. Run 'tuxtools' to see the menu."
