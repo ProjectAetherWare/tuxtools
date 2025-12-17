@@ -1,5 +1,5 @@
 #!/bin/bash
-# Tuxtools Full Installer with all commands implemented
+# Tuxtools Full Installer (All-in-One, Fully Functional)
 
 TU_DIR="$HOME/.tuxtools"
 BIN_DIR="$HOME/.local/bin"
@@ -20,10 +20,9 @@ log_run() {
 # repairall
 cat > "$CMDS_DIR/repairall.cmd" <<'EOF'
 #!/bin/bash
-read -p "This will update, repair, and reboot your system. Continue? [y/N]: " choice
+read -p "Full system repair, update, and reboot? [y/N]: " choice
 [[ $choice != y && $choice != Y ]] && exit
 sudo apt update && sudo apt upgrade -y && sudo apt autoremove -y
-sync; sudo sysctl -w vm.drop_caches=3
 sudo reboot
 EOF
 
@@ -63,7 +62,7 @@ EOF
 # sysupdate
 cat > "$CMDS_DIR/sysupdate.cmd" <<'EOF'
 #!/bin/bash
-read -p "Update & repair system safely? [y/N]: " choice
+read -p "Safe full system update + repair? [y/N]: " choice
 [[ $choice != y && $choice != Y ]] && exit
 sudo apt update && sudo apt upgrade -y
 sudo apt autoremove -y
@@ -183,10 +182,10 @@ EOF
 # update-tuxtools
 cat > "$CMDS_DIR/update-tuxtools.cmd" <<'EOF'
 #!/bin/bash
-echo "To update tuxtools, run the installer script again."
+echo "Re-run this installer to update tuxtools."
 EOF
 
-# Make all command stubs
+# --- Make stubs executable ---
 for cmdfile in "$CMDS_DIR"/*.cmd; do
     cmdname=$(basename "$cmdfile" .cmd)
     cat > "$COMMANDS_DIR/$cmdname" <<EOF
@@ -198,7 +197,7 @@ if [[ -f "\$CMDS_DIR/$cmdname.cmd" ]]; then
     bash "\$CMDS_DIR/$cmdname.cmd"
     echo "\$(date '+%F %T') | $cmdname executed" >> "\$LOGS_DIR/tuxtools.log"
 else
-    echo "Command file not found!"
+    echo "Command file \$CMDS_DIR/$cmdname.cmd not found!"
 fi
 EOF
     chmod +x "$COMMANDS_DIR/$cmdname"
@@ -209,6 +208,7 @@ cat > "$BIN_DIR/tuxtools" <<'EOF'
 #!/bin/bash
 TU_DIR="$HOME/.tuxtools"
 COMMANDS_DIR="$TU_DIR/commands"
+LOGS_DIR="$TU_DIR/logs"
 
 show_menu() {
     echo -e "\e[1;34m=== TUXTOOLS MENU ===\e[0m"
@@ -232,12 +232,16 @@ show_menu() {
 }
 
 if [[ "$1" == "-options" ]]; then
+    echo -e "\e[1;34m=== TUXTOOLS OPTIONS ===\e[0m"
     echo "1) List commands"
-    echo "2) Delete Tuxtools"
+    echo "2) Update Tuxtools"
+    echo "3) Delete Tuxtools"
     read -p "Choose: " choice
     case "$choice" in
         1) ls "$COMMANDS_DIR" ;;
-        2) rm -rf "$TU_DIR"; echo "Tuxtools removed"; exit ;;
+        2) echo "Re-run installer to update Tuxtools." ;;
+        3) rm -rf "$TU_DIR"; echo "Tuxtools deleted"; exit ;;
+        *) echo "Invalid option"; exit ;;
     esac
     exit
 fi
@@ -256,11 +260,11 @@ EOF
 
 chmod +x "$BIN_DIR/tuxtools"
 
-# Add to PATH if missing
+# Add bin to PATH
 if ! echo "$PATH" | grep -q "$BIN_DIR"; then
-    echo "export PATH=\"$BIN_DIR:\$PATH\"" >> "$HOME/.bashrc"
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
     echo "Added $BIN_DIR to PATH. Run 'source ~/.bashrc' or restart terminal."
 fi
 
-echo "Tuxtools installed fully!"
-echo "Run 'tuxtools' for menu, or run commands directly in terminal."
+echo "Tuxtools installed successfully!"
+echo "Run 'tuxtools' for menu or commands directly in terminal."
