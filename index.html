@@ -10,11 +10,11 @@
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         margin: 0;
         padding: 0;
-        /* Matte gradient background */
         background: linear-gradient(135deg, #ffffff, #ffb74d);
         color: #333;
         position: relative;
         min-height: 100vh;
+        transition: background 0.3s, color 0.3s;
     }
 
     header {
@@ -25,6 +25,7 @@
         border-bottom-left-radius: 20px;
         border-bottom-right-radius: 20px;
         box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        transition: background-color 0.3s, color 0.3s;
     }
 
     header h1 {
@@ -45,6 +46,7 @@
         background-color: rgba(255,255,255,0.9);
         border-radius: 15px;
         box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        transition: background-color 0.3s, color 0.3s;
     }
 
     section {
@@ -53,11 +55,13 @@
         background-color: #fff3e0;
         border-left: 8px solid #ff6f00;
         border-radius: 8px;
+        transition: background-color 0.3s, border-left-color 0.3s;
     }
 
     h2 {
         color: #ff6f00;
         margin-top: 0;
+        transition: color 0.3s;
     }
 
     a.button {
@@ -69,7 +73,7 @@
         border-radius: 5px;
         margin: 10px 10px 10px 0;
         font-weight: bold;
-        transition: background-color 0.3s ease;
+        transition: background-color 0.3s, color 0.3s;
     }
 
     a.button:hover {
@@ -85,19 +89,7 @@
         max-height: 400px;
         white-space: pre-wrap;
         word-wrap: break-word;
-    }
-
-    ul.commands {
-        list-style-type: none;
-        padding-left: 0;
-    }
-
-    ul.commands li {
-        background-color: #fff3e0;
-        margin: 5px 0;
-        padding: 10px;
-        border-left: 4px solid #ff6f00;
-        border-radius: 4px;
+        transition: background-color 0.3s, border-color 0.3s, color 0.3s;
     }
 
     .curl-box {
@@ -108,6 +100,33 @@
         margin-top: 10px;
         font-family: monospace;
         user-select: all;
+        transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+    }
+
+    .command {
+        background-color: #fff3e0;
+        border-left: 4px solid #ff6f00;
+        border-radius: 5px;
+        margin: 5px 0;
+        padding: 10px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background 0.3s, border-left-color 0.3s;
+    }
+
+    .command:hover {
+        background-color: #ffe0b2;
+    }
+
+    .description {
+        display: none;
+        padding: 8px 12px;
+        border-left: 2px solid #ff6f00;
+        margin-top: 4px;
+        background-color: #fff8e1;
+        border-radius: 4px;
+        font-weight: normal;
+        transition: background-color 0.3s, border-color 0.3s, color 0.3s;
     }
 
     footer {
@@ -119,9 +138,10 @@
         border-top-left-radius: 20px;
         border-top-right-radius: 20px;
         box-shadow: 0 -5px 15px rgba(0,0,0,0.2);
+        position: relative;
+        transition: background-color 0.3s, color 0.3s;
     }
 
-    /* Tux image bottom-left corner */
     .tux-corner {
         position: fixed;
         bottom: 0;
@@ -130,6 +150,76 @@
         opacity: 0.85;
         z-index: 1000;
         pointer-events: none;
+    }
+
+    .powered {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 10px;
+    }
+
+    .powered img {
+        width: 30px;
+        margin-left: 8px;
+    }
+
+    /* Dark Mode */
+    @media (prefers-color-scheme: dark) {
+        body {
+            background: linear-gradient(135deg, #2b2b2b, #ff6f00);
+            color: #f2f2f2;
+        }
+
+        main {
+            background-color: rgba(40,40,40,0.95);
+            color: #f2f2f2;
+        }
+
+        section {
+            background-color: #3b3b3b;
+            border-left-color: #ff9800;
+        }
+
+        h2 {
+            color: #ff9800;
+        }
+
+        a.button {
+            background-color: #ff9800;
+            color: #222;
+        }
+
+        a.button:hover {
+            background-color: #e68a00;
+            color: #fff;
+        }
+
+        pre, .curl-box {
+            background-color: #2b2b2b;
+            border-color: #ff9800;
+            color: #f2f2f2;
+        }
+
+        .command {
+            background-color: #3b3b3b;
+            border-left-color: #ff9800;
+        }
+
+        .command:hover {
+            background-color: #4b4b4b;
+        }
+
+        .description {
+            background-color: #4b4b4b;
+            border-color: #ff9800;
+            color: #f2f2f2;
+        }
+
+        footer {
+            background-color: rgba(255,111,0,0.9);
+            color: #222;
+        }
     }
 
 </style>
@@ -162,35 +252,73 @@
 
     <section>
         <h2>Available Commands</h2>
-        <ul class="commands">
-            <li>repairall - Full system repair, update, and reboot</li>
-            <li>optimizeall - Performance optimizer + cleanup + reboot</li>
-            <li>cleanup - Fast cleanup of temp files and logs</li>
-            <li>sysinfo - Show system, CPU, and memory info</li>
-            <li>sysupdate - Safe full system update + repair</li>
-            <li>updateapps - Update APT, Snap, and Flatpak packages</li>
-            <li>clearcache - Wipe APT, system, and user caches</li>
-            <li>flushdns - Clear DNS cache</li>
-            <li>fixperms - Fix home folder permissions</li>
-            <li>speedtest - Check internet speed</li>
-            <li>findbig - Find top 10 largest files in home</li>
-            <li>rebootnow - Instantly reboot the system</li>
-            <li>shutdownnow - Instantly power off the system</li>
-            <li>temps - Show CPU/GPU temperatures</li>
-            <li>gaming-mode - Optimize system for gaming</li>
-            <li>fps-boost - Boost FPS by disabling VSync</li>
-            <li>alias-add - Add a terminal alias</li>
-            <li>log-run - Show recent command logs</li>
-            <li>update-tuxtools - Update Tuxtools</li>
-        </ul>
+        <div class="command">repairall</div>
+        <div class="description">Full system repair, update, and reboot</div>
+
+        <div class="command">optimizeall</div>
+        <div class="description">Performance optimizer + cleanup + reboot</div>
+
+        <div class="command">cleanup</div>
+        <div class="description">Fast cleanup of temp files and logs</div>
+
+        <div class="command">sysinfo</div>
+        <div class="description">Show system, CPU, and memory info</div>
+
+        <div class="command">sysupdate</div>
+        <div class="description">Safe full system update + repair</div>
+
+        <div class="command">updateapps</div>
+        <div class="description">Update APT, Snap, and Flatpak packages</div>
+
+        <div class="command">clearcache</div>
+        <div class="description">Wipe APT, system, and user caches</div>
+
+        <div class="command">flushdns</div>
+        <div class="description">Clear DNS cache</div>
+
+        <div class="command">fixperms</div>
+        <div class="description">Fix home folder permissions</div>
+
+        <div class="command">speedtest</div>
+        <div class="description">Check internet speed</div>
+
+        <div class="command">findbig</div>
+        <div class="description">Find top 10 largest files in home</div>
+
+        <div class="command">rebootnow</div>
+        <div class="description">Instantly reboot the system</div>
+
+        <div class="command">shutdownnow</div>
+        <div class="description">Instantly power off the system</div>
+
+        <div class="command">temps</div>
+        <div class="description">Show CPU/GPU temperatures</div>
+
+        <div class="command">gaming-mode</div>
+        <div class="description">Optimize system for gaming</div>
+
+        <div class="command">fps-boost</div>
+        <div class="description">Boost FPS by disabling VSync</div>
+
+        <div class="command">alias-add</div>
+        <div class="description">Add a terminal alias</div>
+
+        <div class="command">log-run</div>
+        <div class="description">Show recent command logs</div>
+
+        <div class="command">update-tuxtools</div>
+        <div class="description">Update Tuxtools</div>
     </section>
 </main>
 
 <footer>
     &copy; 2025 Project AetherWare
+    <div class="powered">
+        Powered by MicroCroc
+        <img src="croc.png" alt="Croc Logo">
+    </div>
 </footer>
 
-<!-- Tux image at bottom left -->
 <img src="tux.png" alt="Tux Logo" class="tux-corner">
 
 <script>
@@ -203,6 +331,15 @@
             document.getElementById("script-content").textContent = "Failed to load script.";
             console.error(err);
         });
+
+    // Collapsible commands
+    const commands = document.querySelectorAll('.command');
+    commands.forEach(cmd => {
+        cmd.addEventListener('click', () => {
+            const next = cmd.nextElementSibling;
+            next.style.display = next.style.display === "block" ? "none" : "block";
+        });
+    });
 </script>
 </body>
 </html>
